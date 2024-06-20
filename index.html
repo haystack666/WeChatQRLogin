@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>微信扫码登录</title>
+    <script>
+        var ipAddress = '';
+
+        function getIP() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'get_ip.php', true);
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var response = JSON.parse(xhr.responseText);
+                    ipAddress = response.ip;
+                    console.log(ipAddress);
+                }
+            };
+            xhr.send();
+        }
+
+        function checkScanStatus(sceneStr) {
+            fetch(`check_scan_status.php?scene_str=${sceneStr}&ip=${ipAddress}&ua=${navigator.userAgent}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'scanned') {
+                        window.location.href = `login_success.php?scene_str=${sceneStr}&ip=${ipAddress}&ua=${navigator.userAgent}`;
+                    } else {
+                        setTimeout(() => checkScanStatus(sceneStr), 2000);
+                    }
+                });
+        }
+
+        fetch('get_qr_code.php')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('qrcode').src = data.qr_url;
+                checkScanStatus(data.scene_str);
+            });
+
+        window.onload = getIP;
+    </script>
+</head>
+<body>
+    <h2>请使用微信扫码登录</h2>
+    <img id="qrcode" src="" alt="扫码登录">
+</body>
+</html>
+
+
+
